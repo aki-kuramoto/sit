@@ -354,9 +354,9 @@ body.resizing {
 /* Shell Profile rows in settings */
 .shell-profile-row {
     display: grid;
-    grid-template-columns: 1fr 2fr 1.5fr auto;
+    grid-template-columns: 1fr 2fr 1.5fr 1fr 1fr auto;
     gap: 6px;
-    align-items: center;
+    align-items: start;
     margin-bottom: 6px;
 }
 
@@ -367,6 +367,24 @@ body.resizing {
     padding: 6px 8px;
     color: var(--text-primary);
     font-size: 13px;
+}
+
+.shell-profile-row textarea {
+    background: var(--bg-input);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    padding: 6px 8px;
+    color: var(--text-primary);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    resize: vertical;
+    outline: none;
+    transition: border-color 0.2s;
+    min-height: 36px;
+}
+
+.shell-profile-row textarea:focus {
+    border-color: var(--accent-blue);
 }
 
 /* ==================== Settings Panel ==================== */
@@ -414,7 +432,6 @@ body.resizing {
     border: 1px solid var(--border-color);
     border-radius: 12px;
     width: calc(100vw - 48px);
-    max-width: 680px;
     max-height: 80vh;
     display: flex;
     flex-direction: column;

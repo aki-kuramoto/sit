@@ -20,7 +20,7 @@ export function ResolveAction(arg1:string):Promise<string>;
 
 export function StartTerminal(arg1:number,arg2:number):Promise<void>;
 
-export function StartTerminalWithCommand(arg1:string,arg2:Array<string>,arg3:number,arg4:number):Promise<void>;
+export function StartTerminalWithCommand(arg1:string,arg2:Array<string>,arg3:Array<string>,arg4:Array<string>,arg5:number,arg6:number):Promise<void>;
 
 export function UpdateConfig(arg1:config.Config):Promise<void>;
 

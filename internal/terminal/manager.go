@@ -58,7 +58,8 @@ func defaultShell() (string, []string) {
 
 // Start starts a shell process attached to a PTY.
 // If command is empty, the default shell for the platform is used.
-func (m *Manager) Start(command string, args []string, cols, rows int) error {
+// If env is non-nil, it replaces the default process environment.
+func (m *Manager) Start(command string, args []string, env []string, cols, rows int) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
@@ -89,6 +90,9 @@ func (m *Manager) Start(command string, args []string, cols, rows int) error {
 
 	cmdArgs := append([]string{command}, args...)
 	cmd := pty.Command(cmdArgs[0], cmdArgs[1:]...)
+	if len(env) > 0 {
+		cmd.Env = env
+	}
 	if err := cmd.Start(); err != nil {
 		pty.Close()
 		return fmt.Errorf("failed to start shell %q: %w", command, err)

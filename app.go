@@ -81,12 +81,64 @@ func (a *App) shutdown(ctx context.Context) {
 // StartTerminal starts the default shell process.
 func (a *App) StartTerminal(cols, rows int) error {
 	cfg := a.config.Get()
-	return a.terminal.Start(cfg.Shell, nil, cols, rows)
+	return a.terminal.Start(cfg.Shell, nil, nil, cols, rows)
 }
 
 // StartTerminalWithCommand starts a specific command with arguments.
-func (a *App) StartTerminalWithCommand(command string, args []string, cols, rows int) error {
-	return a.terminal.Start(command, args, cols, rows)
+// env contains additional environment variables in "KEY=VALUE" format.
+// pathAppend contains directories to append to the PATH.
+func (a *App) StartTerminalWithCommand(command string, args []string, env []string, pathAppend []string, cols, rows int) error {
+	mergedEnv := buildEnv(env, pathAppend)
+	return a.terminal.Start(command, args, mergedEnv, cols, rows)
+}
+
+// buildEnv constructs a complete environment variable slice by merging
+// additional variables and PATH entries into the current process environment.
+// Returns nil if both env and pathAppend are empty (inherits parent environment).
+func buildEnv(env []string, pathAppend []string) []string {
+	if len(env) == 0 && len(pathAppend) == 0 {
+		return nil
+	}
+
+	base := os.Environ()
+
+	// Append directories to PATH
+	if len(pathAppend) > 0 {
+		extra := strings.Join(pathAppend, string(os.PathListSeparator))
+		found := false
+		for i, e := range base {
+			if strings.HasPrefix(strings.ToUpper(e), "PATH=") {
+				base[i] = e + string(os.PathListSeparator) + extra
+				found = true
+				break
+			}
+		}
+		if !found {
+			base = append(base, "PATH="+extra)
+		}
+	}
+
+	// Add/override environment variables
+	for _, entry := range env {
+		key, _, _ := strings.Cut(entry, "=")
+		if key == "" {
+			continue
+		}
+		upper := strings.ToUpper(key) + "="
+		replaced := false
+		for i, e := range base {
+			if strings.HasPrefix(strings.ToUpper(e), upper) {
+				base[i] = entry
+				replaced = true
+				break
+			}
+		}
+		if !replaced {
+			base = append(base, entry)
+		}
+	}
+
+	return base
 }
 
 // WriteTerminal sends data to the terminal.

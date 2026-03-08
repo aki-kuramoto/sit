@@ -18,6 +18,8 @@ export namespace config {
 	    name: string;
 	    command: string;
 	    args: string[];
+	    env?: string[];
+	    pathAppend?: string[];
 	
 	    static createFrom(source: any = {}) {
 	        return new ShellProfile(source);
@@ -28,6 +30,8 @@ export namespace config {
 	        this.name = source["name"];
 	        this.command = source["command"];
 	        this.args = source["args"];
+	        this.env = source["env"];
+	        this.pathAppend = source["pathAppend"];
 	    }
 	}
 	export class TerminalKeyBinding {

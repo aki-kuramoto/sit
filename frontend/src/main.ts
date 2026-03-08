@@ -16,7 +16,7 @@ let commandModeTimeoutId: ReturnType<typeof setTimeout> | null = null;
 let commandModeTimeoutSeconds = 10; // 0 = no timeout
 let commandModePrefix = 'Ctrl+Shift+J';
 let onExitBehavior = 'select'; // "exit" | "restart" | "select"
-let shellProfiles: Array<{ name: string; command: string; args: string[] }> = [];
+let shellProfiles: Array<{ name: string; command: string; args: string[]; env: string[]; pathAppend: string[] }> = [];
 let terminalKeyBindings: Array<{ key: string; guards: string; action: string }> = [];
 let bellActions: Array<{ type: string; file: string }> = [];
 let startupBehavior = 'immediate'; // "immediate" | "select"
@@ -206,12 +206,12 @@ async function restartDefaultShell(): Promise<void> {
     }
 }
 
-async function startShellWithCommand(command: string, args: string[]): Promise<void> {
+async function startShellWithCommand(command: string, args: string[], env: string[] = [], pathAppend: string[] = []): Promise<void> {
     shellSelectOverlay.classList.add('hidden');
     terminal.reset();
     const { cols, rows } = terminal;
     try {
-        await StartTerminalWithCommand(command, args, cols, rows);
+        await StartTerminalWithCommand(command, args, env, pathAppend, cols, rows);
         terminal.focus();
     } catch (err) {
         terminal.writeln(`\x1b[31mFailed to start shell: ${err}\x1b[0m`);
@@ -242,7 +242,7 @@ function showShellSelection(isStartup: boolean = false): void {
         card.appendChild(cmdSpan);
 
         card.addEventListener('click', () => {
-            startShellWithCommand(profile.command, profile.args || []);
+            startShellWithCommand(profile.command, profile.args || [], profile.env || [], profile.pathAppend || []);
         });
 
         shellProfilesList.appendChild(card);
@@ -570,7 +570,7 @@ function openSettings(): void {
         shellProfileRowsContainer.innerHTML = '';
         const profiles = cfg.shellProfiles || [];
         for (const profile of profiles) {
-            addShellProfileRow(profile.name, profile.command, (profile.args || []).join(' '));
+            addShellProfileRow(profile.name, profile.command, (profile.args || []).join(' '), (profile.env || []).join('\n'), (profile.pathAppend || []).join('\n'));
         }
 
         // Populate key bindings
@@ -720,7 +720,7 @@ function addBellActionRow(type: string = 'no-evil', file: string = ''): void {
     bellActionRows.appendChild(row);
 }
 
-function addShellProfileRow(name: string = '', command: string = '', args: string = ''): void {
+function addShellProfileRow(name: string = '', command: string = '', args: string = '', env: string = '', pathAppend: string = ''): void {
     const row = document.createElement('div');
     row.className = 'shell-profile-row';
 
@@ -739,6 +739,18 @@ function addShellProfileRow(name: string = '', command: string = '', args: strin
     argsInput.value = args;
     argsInput.placeholder = 'Args (space-separated)';
 
+    const envInput = document.createElement('textarea');
+    envInput.className = 'profile-env-input';
+    envInput.value = env;
+    envInput.placeholder = 'Env (one KEY=VALUE per line)';
+    envInput.rows = 2;
+
+    const pathInput = document.createElement('textarea');
+    pathInput.className = 'profile-path-input';
+    pathInput.value = pathAppend;
+    pathInput.placeholder = 'PathAppend (one dir per line)';
+    pathInput.rows = 2;
+
     const deleteBtn = document.createElement('button');
     deleteBtn.className = 'keybinding-delete';
     deleteBtn.innerHTML = '&times;';
@@ -750,6 +762,8 @@ function addShellProfileRow(name: string = '', command: string = '', args: strin
     row.appendChild(nameInput);
     row.appendChild(cmdInput);
     row.appendChild(argsInput);
+    row.appendChild(envInput);
+    row.appendChild(pathInput);
     row.appendChild(deleteBtn);
     shellProfileRowsContainer.appendChild(row);
 }
@@ -767,7 +781,7 @@ interface CollectedSettings {
     startupBehavior: string;
     theme: string;
     themeOverrides: Record<string, string>;
-    shellProfiles: Array<{ name: string; command: string; args: string[] }>;
+    shellProfiles: Array<{ name: string; command: string; args: string[]; env: string[]; pathAppend: string[] }>;
 }
 
 function collectSettingsFromForm(): CollectedSettings {
@@ -786,15 +800,18 @@ function collectSettingsFromForm(): CollectedSettings {
     });
 
     // Collect shell profiles
-    const profiles: Array<{ name: string; command: string; args: string[] }> = [];
+    const profiles: Array<{ name: string; command: string; args: string[]; env: string[]; pathAppend: string[] }> = [];
     const profileRows = shellProfileRowsContainer.querySelectorAll('.shell-profile-row');
     profileRows.forEach((row) => {
         const inputs = row.querySelectorAll('input');
+        const textareas = row.querySelectorAll('textarea');
         const pName = inputs[0]?.value.trim() || '';
         const pCmd = inputs[1]?.value.trim() || '';
         const pArgs = inputs[2]?.value.trim().split(/\s+/).filter(Boolean) || [];
+        const pEnv = (textareas[0] as HTMLTextAreaElement)?.value.split('\n').map(s => s.trim()).filter(Boolean) || [];
+        const pPath = (textareas[1] as HTMLTextAreaElement)?.value.split('\n').map(s => s.trim()).filter(Boolean) || [];
         if (pCmd) {
-            profiles.push({ name: pName || pCmd, command: pCmd, args: pArgs });
+            profiles.push({ name: pName || pCmd, command: pCmd, args: pArgs, env: pEnv, pathAppend: pPath });
         }
     });
 
@@ -1094,7 +1111,13 @@ async function init(): Promise<void> {
             onExitBehavior = cfg.onExit;
         }
         if (cfg.shellProfiles) {
-            shellProfiles = cfg.shellProfiles;
+            shellProfiles = cfg.shellProfiles.map(p => ({
+                name: p.name,
+                command: p.command,
+                args: p.args || [],
+                env: p.env || [],
+                pathAppend: p.pathAppend || [],
+            }));
         }
         if (cfg.terminalKeybindings) {
             terminalKeyBindings = cfg.terminalKeybindings.map(tb => ({

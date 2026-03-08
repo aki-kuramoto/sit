@@ -11,9 +11,11 @@ import (
 
 // ShellProfile represents a saved shell configuration.
 type ShellProfile struct {
-	Name    string   `json:"name"`    // display name
-	Command string   `json:"command"` // executable path
-	Args    []string `json:"args"`    // command arguments
+	Name       string   `json:"name"`                 // display name
+	Command    string   `json:"command"`               // executable path
+	Args       []string `json:"args"`                  // command arguments
+	Env        []string `json:"env,omitempty"`          // additional env vars ("KEY=VALUE" format)
+	PathAppend []string `json:"pathAppend,omitempty"`   // directories to append to PATH
 }
 
 // TerminalKeyBinding represents a key binding for the terminal with optional guard conditions.

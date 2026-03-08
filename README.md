@@ -29,6 +29,46 @@ Pre-built binaries for all platforms are available on the [Releases](https://git
 - **Bell actions** — Configurable responses to terminal bell: visual flash, sound playback, or emoji indicator
 - **Command mode** — tmux-inspired prefix key for terminal-side actions
 
+### Shell Profiles
+
+Shell profiles let you define any shell or command-line environment as a named profile. Each profile specifies the executable, its arguments, and optionally additional environment variables (`env`) and extra directories to add to `PATH` (`pathAppend`).
+
+**WSL (Windows Subsystem for Linux)**
+
+```json
+{
+  "name": "WSL",
+  "command": "wsl.exe",
+  "args": []
+}
+```
+
+To launch a specific distribution, use the `--distribution` flag:
+
+```json
+{
+  "name": "Ubuntu on WSL",
+  "command": "wsl.exe",
+  "args": ["--distribution", "Ubuntu"]
+}
+```
+
+**MSYS2 (UCRT64)**
+
+When launching MSYS2's bash directly (by its full path), you need to set the `MSYSTEM` environment variable and add MSYS2's `/usr/bin` to `PATH` so that login profile scripts can find tools like `cygpath`:
+
+```json
+{
+  "name": "MSYS2 UCRT64",
+  "command": "C:\\msys64\\usr\\bin\\bash.exe",
+  "args": ["--login"],
+  "env": ["MSYSTEM=UCRT64", "CHERE_INVOKING=1"],
+  "pathAppend": ["C:\\msys64\\usr\\bin"]
+}
+```
+
+> `CHERE_INVOKING=1` prevents bash from changing to the home directory on login.
+
 ### Built With
 
 - [Go](https://go.dev/) + [Wails v2](https://wails.io/) — Backend and native window
@@ -99,6 +139,46 @@ MIT License © 2026- Akihiro Kuramoto
 - **テーマプリセット** — 4種の組み込みテーマ（ライト/ダーク UI × ライト/ダーク端末）と個別カラーオーバーライド
 - **ベルアクション** — ターミナルベルへの応答を設定可能: 視覚的フラッシュ、音声再生、絵文字表示
 - **コマンドモード** — tmux に着想を得たプレフィックスキーによるターミナル側アクション
+
+### シェルプロファイル
+
+シェルプロファイルでは、任意のシェルやコマンドライン環境を名前付きプロファイルとして定義できます。各プロファイルには実行ファイル、引数に加えて、追加の環境変数（`env`）や `PATH` に追加するディレクトリ（`pathAppend`）を指定できます。
+
+**WSL (Windows Subsystem for Linux)**
+
+```json
+{
+  "name": "WSL",
+  "command": "wsl.exe",
+  "args": []
+}
+```
+
+特定のディストリビューションを起動するには `--distribution` フラグを使用します:
+
+```json
+{
+  "name": "Ubuntu on WSL",
+  "command": "wsl.exe",
+  "args": ["--distribution", "Ubuntu"]
+}
+```
+
+**MSYS2 (UCRT64)**
+
+MSYS2 の bash をフルパスで直接起動する場合、`MSYSTEM` 環境変数の設定と MSYS2 の `/usr/bin` を `PATH` に追加する必要があります。これにより、ログインプロファイルスクリプトが `cygpath` などのツールを見つけられるようになります:
+
+```json
+{
+  "name": "MSYS2 UCRT64",
+  "command": "C:\\msys64\\usr\\bin\\bash.exe",
+  "args": ["--login"],
+  "env": ["MSYSTEM=UCRT64", "CHERE_INVOKING=1"],
+  "pathAppend": ["C:\\msys64\\usr\\bin"]
+}
+```
+
+> `CHERE_INVOKING=1` を設定すると、ログイン時にホームディレクトリに移動しなくなります。
 
 ### 使用技術
 
