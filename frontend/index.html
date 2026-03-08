@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>sit</title>
+    <link rel="stylesheet" href="./src/style.css" />
+</head>
+
+<body>
+    <div id="app">
+        <div id="terminal-container"></div>
+        <div id="resize-handle"></div>
+        <div id="input-container">
+            <textarea id="input-box" placeholder="Enter text here... (Shift+Enter or Ctrl+Enter to send)"
+                rows="3"></textarea>
+            <div id="input-buttons">
+                <button id="settings-button" title="Settings">&#9881;</button>
+                <button id="about-button" title="About">&#9432;</button>
+                <button id="send-button" title="Send to terminal">&#9654;</button>
+                <div id="bell-indicator" class="hidden"></div>
+            </div>
+        </div>
+
+        <!-- About Dialog -->
+        <div id="about-overlay" class="hidden">
+            <div id="about-panel">
+                <div id="about-header">
+                    <h2>sit</h2>
+                    <button id="about-close" title="Close">&times;</button>
+                </div>
+                <p class="about-tagline">Steady Input Terminal</p>
+                <p class="about-description">Desktop terminal with a persistent multi-line input box</p>
+                <div id="about-details">
+                    <div class="about-row"><span class="about-label">Version</span><span id="about-version">dev</span>
+                    </div>
+                    <div class="about-row"><span class="about-label">Build Date</span><span
+                            id="about-build-date">unknown</span></div>
+                    <div class="about-row"><span class="about-label">Go</span><span id="about-go-version"></span></div>
+                    <div class="about-row"><span class="about-label">Platform</span><span id="about-platform"></span>
+                    </div>
+                </div>
+                <div id="about-links">
+                    <a href="https://github.com/aki-kuramoto/sit" id="about-github-link" target="_blank">GitHub</a>
+                </div>
+                <p class="about-license">MIT License &copy; 2026- Akihiro Kuramoto</p>
+            </div>
+        </div>
+
+        <!-- Command Mode Indicator -->
+        <div id="command-mode-indicator" class="hidden">
+            <span class="indicator-label">COMMAND</span>
+            <span class="indicator-hint">J/Tab: focus input &nbsp; Esc: cancel</span>
+        </div>
+
+        <!-- Shell Selection Overlay (shown on shell exit with onExit=select) -->
+        <div id="shell-select-overlay" class="hidden">
+            <div id="shell-select-panel">
+                <h2 id="shell-select-title">Shell Exited</h2>
+                <p class="settings-hint">Select a shell to start, or exit the application.</p>
+
+                <!-- Saved profiles -->
+                <div id="shell-profiles-list"></div>
+
+                <div id="shell-select-actions">
+                    <button id="shell-restart-default" class="settings-btn secondary">Start Default Shell</button>
+                    <button id="shell-open-settings" class="settings-btn secondary">Settings</button>
+                    <button id="shell-exit-app" class="settings-btn secondary">Exit Application</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Settings Panel Modal -->
+        <div id="settings-overlay" class="hidden">
+            <div id="settings-panel">
+                <div id="settings-header">
+                    <h2>Settings</h2>
+                    <button id="settings-close" title="Close">&times;</button>
+                </div>
+                <div id="settings-body">
+                    <!-- Theme -->
+                    <section class="settings-section">
+                        <h3>Theme</h3>
+                        <div class="settings-row">
+                            <label for="setting-theme">Preset</label>
+                            <select id="setting-theme">
+                                <option value="light-around-dark">Light UI + Dark Terminal</option>
+                                <option value="dark-around-dark">Dark UI + Dark Terminal</option>
+                                <option value="light-around-light">Light UI + Light Terminal</option>
+                                <option value="dark-around-light">Dark UI + Light Terminal</option>
+                            </select>
+                        </div>
+                    </section>
+
+                    <!-- Font Settings -->
+                    <section class="settings-section">
+                        <h3>Font</h3>
+                        <div class="settings-row">
+                            <label for="setting-font-family">Font Family</label>
+                            <input type="text" id="setting-font-family"
+                                placeholder="Consolas, 'Courier New', monospace" />
+                        </div>
+                        <div class="settings-row">
+                            <label for="setting-font-size">Font Size</label>
+                            <div class="settings-number-input">
+                                <button class="num-btn" data-target="setting-font-size" data-delta="-1">−</button>
+                                <input type="number" id="setting-font-size" min="8" max="32" step="1" />
+                                <button class="num-btn" data-target="setting-font-size" data-delta="1">+</button>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Shell Settings -->
+                    <section class="settings-section">
+                        <h3>Shell</h3>
+                        <div class="settings-row">
+                            <label for="setting-shell">Default Shell</label>
+                            <div class="shell-browse-row">
+                                <input type="text" id="setting-shell" placeholder="(default: auto-detect)" />
+                                <button id="setting-shell-browse" class="settings-btn secondary">Browse…</button>
+                            </div>
+                        </div>
+                        <div class="settings-row">
+                            <label for="setting-on-startup">On Startup</label>
+                            <select id="setting-on-startup">
+                                <option value="immediate">Start default shell</option>
+                                <option value="select">Show shell selection</option>
+                            </select>
+                        </div>
+                        <div class="settings-row">
+                            <label for="setting-on-exit">On Shell Exit</label>
+                            <select id="setting-on-exit">
+                                <option value="select">Show shell selection</option>
+                                <option value="restart">Restart default shell</option>
+                                <option value="exit">Exit application</option>
+                            </select>
+                        </div>
+                    </section>
+
+                    <!-- Shell Profiles -->
+                    <section class="settings-section">
+                        <h3>Shell Profiles</h3>
+                        <p class="settings-hint">Saved shells shown in the selection screen.</p>
+                        <div id="shell-profile-rows"></div>
+                        <button id="add-shell-profile" class="settings-add-btn">+ Add Shell Profile</button>
+                    </section>
+
+                    <!-- Bell Actions -->
+                    <section class="settings-section">
+                        <h3>Bell Actions</h3>
+                        <p class="settings-hint">Actions to perform when the terminal bell (BEL) is triggered.
+                            Multiple actions can run simultaneously.</p>
+                        <div id="bell-action-rows"></div>
+                        <button id="add-bell-action" class="settings-add-btn">+ Add Bell Action</button>
+                    </section>
+
+                    <!-- Terminal Key Bindings -->
+                    <section class="settings-section">
+                        <h3>Terminal Key Bindings</h3>
+                        <p class="settings-hint">Keys that don't match any binding are passed through to PTY
+                            (Ctrl+C → SIGINT, Ctrl+D → EOF, etc.).
+                            Guards: <code>&amp;selected</code> / <code>&amp;not-selected</code>.
+                        </p>
+                        <div id="terminal-keybinding-rows"></div>
+                        <button id="add-terminal-keybinding" class="settings-add-btn">+ Add Terminal Key
+                            Binding</button>
+                    </section>
+
+                    <!-- Command Mode -->
+                    <section class="settings-section">
+                        <h3>Command Mode</h3>
+                        <p class="settings-hint">Press the prefix key in the terminal to enter command mode. Then press
+                            <code>J</code> to focus the input box.
+                        </p>
+                        <div class="settings-row">
+                            <label for="setting-cmd-prefix">Prefix Key</label>
+                            <input type="text" id="setting-cmd-prefix" placeholder="Ctrl+Shift+J" />
+                        </div>
+                        <div class="settings-row">
+                            <label for="setting-cmd-timeout">Timeout (seconds)</label>
+                            <div class="settings-number-input">
+                                <button class="num-btn" data-target="setting-cmd-timeout" data-delta="-1">−</button>
+                                <input type="number" id="setting-cmd-timeout" min="0" max="600" step="1" />
+                                <button class="num-btn" data-target="setting-cmd-timeout" data-delta="1">+</button>
+                            </div>
+                        </div>
+                        <p class="settings-hint">0 = no timeout (stay in command mode until explicitly cancelled)</p>
+                    </section>
+
+                    <!-- Key Bindings -->
+                    <section class="settings-section">
+                        <h3>Input Box Key Bindings</h3>
+                        <p class="settings-hint">Each key combination can be assigned an action: <code>push</code>,
+                            <code>push-and-follow</code>, <code>execute</code>, <code>execute-and-follow</code>,
+                            <code>newline</code>, or <code>none</code>.
+                        </p>
+                        <div id="keybinding-rows"></div>
+                        <button id="add-keybinding" class="settings-add-btn">+ Add Key Binding</button>
+                    </section>
+                </div>
+                <div id="settings-footer">
+                    <button id="settings-cancel" class="settings-btn secondary">Cancel</button>
+                    <button id="settings-save" class="settings-btn primary">Save</button>
+                </div>
+            </div>
+        </div>
+
+        <script src="./src/main.ts" type="module"></script>
+</body>
+
+</html>

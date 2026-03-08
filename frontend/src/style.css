@@ -1,0 +1,897 @@
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap');
+
+:root {
+    /* Default palette: light-around-dark (overridden at runtime by JS theme system) */
+    --bg-base: #eff1f5;
+    --bg-surface: #e6e9ef;
+    --bg-overlay: #dce0e8;
+    --bg-input: #ccd0da;
+    --text-primary: #4c4f69;
+    --text-secondary: #5c5f77;
+    --text-muted: #9ca0b0;
+    --accent-blue: #1e66f5;
+    --accent-mauve: #8839ef;
+    --accent-green: #40a02b;
+    --accent-peach: #fe640b;
+    --border-color: #bcc0cc;
+    --resize-handle: #acb0be;
+    --button-bg: #1e66f5;
+    --button-hover: #2a6ef5;
+    --button-active: #7287fd;
+    --scrollbar-thumb: #acb0be;
+    --scrollbar-track: transparent;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html,
+body {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background: var(--bg-base);
+    color: var(--text-primary);
+    font-family: 'JetBrains Mono', 'Consolas', 'Courier New', monospace;
+}
+
+#app {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    height: 100%;
+}
+
+/* Terminal area */
+#terminal-container {
+    flex: 1;
+    min-height: 100px;
+    overflow: hidden;
+    background: var(--bg-surface);
+    padding: 4px;
+}
+
+#terminal-container .xterm {
+    height: 100%;
+}
+
+#terminal-container .xterm-viewport {
+    scrollbar-width: thin;
+    scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+}
+
+#terminal-container .xterm-viewport::-webkit-scrollbar {
+    width: 8px;
+}
+
+#terminal-container .xterm-viewport::-webkit-scrollbar-track {
+    background: var(--scrollbar-track);
+}
+
+#terminal-container .xterm-viewport::-webkit-scrollbar-thumb {
+    background: var(--scrollbar-thumb);
+    border-radius: 4px;
+}
+
+/* Resize handle */
+#resize-handle {
+    flex-shrink: 0;
+    height: 5px;
+    background: var(--border-color);
+    cursor: ns-resize;
+    position: relative;
+    transition: background 0.2s ease;
+}
+
+#resize-handle:hover,
+#resize-handle.active {
+    background: var(--accent-blue);
+}
+
+#resize-handle::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 40px;
+    height: 3px;
+    border-top: 1px solid var(--resize-handle);
+    border-bottom: 1px solid var(--resize-handle);
+}
+
+/* Input area */
+#input-container {
+    flex-shrink: 0;
+    display: flex;
+    align-items: stretch;
+    background: var(--bg-overlay);
+    border-top: 1px solid var(--border-color);
+    padding: 8px;
+    gap: 8px;
+    min-height: 60px;
+}
+
+#input-box {
+    flex: 1;
+    resize: none;
+    background: var(--bg-input);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    padding: 8px 12px;
+    font-family: 'JetBrains Mono', 'Consolas', 'Courier New', monospace;
+    font-size: 13px;
+    line-height: 1.5;
+    outline: none;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    scrollbar-width: thin;
+    scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+}
+
+#input-box:focus {
+    border-color: var(--accent-blue);
+    box-shadow: 0 0 0 2px rgba(137, 180, 250, 0.15);
+}
+
+#input-box::placeholder {
+    color: var(--text-muted);
+    font-style: italic;
+}
+
+#input-box::-webkit-scrollbar {
+    width: 6px;
+}
+
+#input-box::-webkit-scrollbar-thumb {
+    background: var(--scrollbar-thumb);
+    border-radius: 3px;
+}
+
+#send-button,
+#settings-button {
+    flex-shrink: 0;
+    width: 44px;
+    background: var(--button-bg);
+    color: var(--bg-base);
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s ease, transform 0.1s ease;
+}
+
+#send-button:hover,
+#settings-button:hover {
+    background: var(--button-hover);
+}
+
+#send-button:active,
+#settings-button:active {
+    background: var(--button-active);
+    transform: scale(0.95);
+}
+
+#settings-button {
+    background: var(--border-color);
+    color: var(--text-secondary);
+    font-size: 18px;
+}
+
+#settings-button:hover {
+    background: var(--resize-handle);
+    color: var(--text-primary);
+}
+
+#input-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    flex-shrink: 0;
+}
+
+/* Command Mode Indicator */
+#command-mode-indicator {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    padding: 6px 16px;
+    background: rgba(203, 166, 247, 0.15);
+    border-bottom: 2px solid var(--accent-mauve);
+    backdrop-filter: blur(8px);
+    z-index: 900;
+    animation: fadeIn 0.15s ease;
+}
+
+#command-mode-indicator.hidden {
+    display: none;
+}
+
+.indicator-label {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    color: var(--accent-mauve);
+    text-transform: uppercase;
+}
+
+.indicator-hint {
+    font-size: 11px;
+    color: var(--text-muted);
+}
+
+.indicator-hint code {
+    background: var(--bg-input);
+    padding: 1px 4px;
+    border-radius: 3px;
+    font-size: 10px;
+    color: var(--text-secondary);
+}
+
+/* Drag-select prevention while resizing */
+body.resizing {
+    user-select: none;
+    -webkit-user-select: none;
+    cursor: ns-resize;
+}
+
+/* ==================== Shell Selection Overlay ==================== */
+
+#shell-select-overlay {
+    position: fixed;
+    inset: 0;
+    background: color-mix(in srgb, var(--bg-overlay) 85%, transparent);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    animation: fadeIn 0.2s ease;
+}
+
+#shell-select-overlay.hidden {
+    display: none;
+}
+
+#shell-select-panel {
+    background: var(--bg-base);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 24px;
+    width: 480px;
+    max-width: 90vw;
+    max-height: 80vh;
+    overflow-y: auto;
+    animation: slideUp 0.2s ease;
+}
+
+#shell-select-panel h2 {
+    color: var(--text-primary);
+    margin: 0 0 8px 0;
+    font-size: 18px;
+}
+
+#shell-select-panel h3 {
+    color: var(--accent-mauve);
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin: 16px 0 8px 0;
+}
+
+#shell-profiles-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 12px;
+}
+
+.shell-profile-card {
+    display: flex;
+    align-items: center;
+    padding: 10px 14px;
+    background: var(--bg-input);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.shell-profile-card:hover {
+    border-color: var(--accent-mauve);
+    background: color-mix(in srgb, var(--accent-mauve) 8%, transparent);
+}
+
+.shell-profile-card .profile-name {
+    font-weight: 600;
+    color: var(--text-primary);
+    flex: 1;
+}
+
+.shell-profile-card .profile-command {
+    font-size: 11px;
+    color: var(--text-muted);
+    font-family: 'JetBrains Mono', monospace;
+}
+
+.shell-browse-row {
+    display: flex;
+    gap: 6px;
+    flex: 1;
+}
+
+.shell-browse-row input {
+    flex: 1;
+}
+
+#shell-custom-section {
+    margin-bottom: 16px;
+}
+
+#shell-select-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid var(--border-color);
+}
+
+#shell-select-actions .settings-btn {
+    flex: 1;
+}
+
+/* Shell Profile rows in settings */
+.shell-profile-row {
+    display: grid;
+    grid-template-columns: 1fr 2fr 1.5fr auto;
+    gap: 6px;
+    align-items: center;
+    margin-bottom: 6px;
+}
+
+.shell-profile-row input {
+    background: var(--bg-input);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    padding: 6px 8px;
+    color: var(--text-primary);
+    font-size: 13px;
+}
+
+/* ==================== Settings Panel ==================== */
+
+#settings-overlay {
+    position: fixed;
+    inset: 0;
+    background: color-mix(in srgb, var(--bg-overlay) 80%, transparent);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    animation: fadeIn 0.15s ease;
+}
+
+#settings-overlay.hidden {
+    display: none;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+#settings-panel {
+    background: var(--bg-base);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    width: calc(100vw - 48px);
+    max-width: 680px;
+    max-height: 80vh;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    animation: slideUp 0.2s ease;
+}
+
+#settings-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+#settings-header h2 {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0;
+}
+
+#settings-close {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    font-size: 22px;
+    cursor: pointer;
+    padding: 2px 6px;
+    border-radius: 4px;
+    transition: color 0.15s, background 0.15s;
+    line-height: 1;
+}
+
+#settings-close:hover {
+    color: var(--text-primary);
+    background: var(--border-color);
+}
+
+#settings-body {
+    padding: 16px 20px;
+    overflow-y: auto;
+    flex: 1;
+    scrollbar-width: thin;
+    scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+}
+
+.settings-section {
+    margin-bottom: 20px;
+}
+
+.settings-section:last-child {
+    margin-bottom: 0;
+}
+
+.settings-section h3 {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--accent-blue);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 12px;
+}
+
+.settings-hint {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-bottom: 10px;
+    line-height: 1.5;
+}
+
+.settings-hint code {
+    background: var(--bg-input);
+    padding: 1px 5px;
+    border-radius: 3px;
+    font-size: 11px;
+    color: var(--accent-mauve);
+}
+
+.settings-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+    gap: 12px;
+}
+
+.settings-row label {
+    font-size: 13px;
+    color: var(--text-secondary);
+    white-space: nowrap;
+    min-width: 100px;
+}
+
+.settings-row input[type="text"],
+.settings-row input[type="number"] {
+    flex: 1;
+    background: var(--bg-input);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    padding: 6px 10px;
+    color: var(--text-primary);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+.settings-row input:focus {
+    border-color: var(--accent-blue);
+}
+
+.settings-number-input {
+    display: flex;
+    align-items: center;
+    gap: 0;
+}
+
+.settings-number-input input {
+    width: 60px;
+    text-align: center;
+    border-radius: 0 !important;
+    -moz-appearance: textfield;
+    appearance: textfield;
+}
+
+.settings-number-input input::-webkit-outer-spin-button,
+.settings-number-input input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.num-btn {
+    background: var(--border-color);
+    border: 1px solid var(--border-color);
+    color: var(--text-secondary);
+    padding: 6px 10px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background 0.15s, color 0.15s;
+    line-height: 1;
+}
+
+.num-btn:first-child {
+    border-radius: 6px 0 0 6px;
+}
+
+.num-btn:last-child {
+    border-radius: 0 6px 6px 0;
+}
+
+.num-btn:hover {
+    background: var(--resize-handle);
+    color: var(--text-primary);
+}
+
+/* Key binding rows */
+.keybinding-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.keybinding-row input[type="text"] {
+    flex: 1;
+    background: var(--bg-input);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    padding: 6px 10px;
+    color: var(--text-primary);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+.keybinding-row input:focus {
+    border-color: var(--accent-blue);
+}
+
+.keybinding-row select {
+    background: var(--bg-input);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    padding: 6px 10px;
+    color: var(--text-primary);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    outline: none;
+    cursor: pointer;
+    min-width: 100px;
+}
+
+.keybinding-row select:focus {
+    border-color: var(--accent-blue);
+}
+
+.keybinding-delete {
+    background: none;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    color: var(--text-muted);
+    cursor: pointer;
+    padding: 4px 8px;
+    font-size: 14px;
+    transition: color 0.15s, border-color 0.15s;
+    line-height: 1;
+}
+
+.keybinding-delete:hover {
+    color: #f38ba8;
+    border-color: #f38ba8;
+}
+
+.settings-add-btn {
+    background: none;
+    border: 1px dashed var(--border-color);
+    border-radius: 6px;
+    color: var(--text-muted);
+    padding: 6px 12px;
+    font-size: 12px;
+    cursor: pointer;
+    width: 100%;
+    transition: color 0.15s, border-color 0.15s;
+    font-family: 'JetBrains Mono', monospace;
+}
+
+.settings-add-btn:hover {
+    color: var(--accent-green);
+    border-color: var(--accent-green);
+}
+
+#settings-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    padding: 12px 20px;
+    border-top: 1px solid var(--border-color);
+}
+
+.settings-btn {
+    padding: 8px 20px;
+    border-radius: 6px;
+    border: none;
+    font-size: 13px;
+    font-family: 'JetBrains Mono', monospace;
+    cursor: pointer;
+    transition: background 0.15s, transform 0.1s;
+}
+
+.settings-btn:active {
+    transform: scale(0.97);
+}
+
+.settings-btn.primary {
+    background: var(--accent-blue);
+    color: var(--bg-base);
+    font-weight: 600;
+}
+
+.settings-btn.primary:hover {
+    background: var(--button-hover);
+}
+
+.settings-btn.secondary {
+    background: var(--border-color);
+    color: var(--text-secondary);
+}
+
+.settings-btn.secondary:hover {
+    background: var(--resize-handle);
+    color: var(--text-primary);
+}
+
+/* ==================== Bell Actions ==================== */
+
+/* Visual bell flash */
+.visual-bell-flash {
+    animation: bell-flash 150ms ease-in-out;
+}
+
+@keyframes bell-flash {
+    0% {
+        filter: brightness(1);
+    }
+
+    50% {
+        filter: brightness(1.6);
+    }
+
+    100% {
+        filter: brightness(1);
+    }
+}
+
+/* No-evil bell indicator */
+#bell-indicator {
+    font-size: 20px;
+    text-align: center;
+    line-height: 1;
+    padding-top: 2px;
+    min-height: 0;
+    transition: opacity 0.15s ease;
+}
+
+#bell-indicator.hidden {
+    display: none;
+}
+
+/* Bell action rows in settings */
+.bell-action-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.bell-action-row select {
+    background: var(--bg-input);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    padding: 6px 10px;
+    color: var(--text-primary);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    outline: none;
+    cursor: pointer;
+    min-width: 120px;
+}
+
+.bell-action-row select:focus {
+    border-color: var(--accent-blue);
+}
+
+.bell-action-row input[type="text"] {
+    flex: 1;
+    background: var(--bg-input);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    padding: 6px 10px;
+    color: var(--text-primary);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+.bell-action-row input:focus {
+    border-color: var(--accent-blue);
+}
+
+.bell-action-row .file-input-wrapper {
+    flex: 1;
+}
+
+.bell-action-row .file-input-wrapper.hidden-field {
+    display: none;
+}
+
+/* ==================== About Dialog ==================== */
+
+#about-overlay {
+    position: fixed;
+    inset: 0;
+    background: color-mix(in srgb, var(--bg-overlay) 80%, transparent);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1001;
+    animation: fadeIn 0.15s ease;
+}
+
+#about-overlay.hidden {
+    display: none;
+}
+
+#about-panel {
+    background: var(--bg-base);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 24px;
+    width: 360px;
+    max-width: 90vw;
+    text-align: center;
+    animation: slideUp 0.2s ease;
+}
+
+#about-header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    margin-bottom: 4px;
+}
+
+#about-header h2 {
+    color: var(--text-primary);
+    font-size: 24px;
+    font-weight: 700;
+    margin: 0;
+}
+
+#about-close {
+    position: absolute;
+    right: 0;
+    top: -4px;
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    font-size: 20px;
+    cursor: pointer;
+    padding: 4px 8px;
+}
+
+#about-close:hover {
+    color: var(--text-primary);
+}
+
+.about-tagline {
+    color: var(--accent-mauve);
+    font-size: 13px;
+    font-weight: 500;
+    margin: 0 0 4px 0;
+}
+
+.about-description {
+    color: var(--text-secondary);
+    font-size: 12px;
+    margin: 0 0 16px 0;
+}
+
+#about-details {
+    background: var(--bg-input);
+    border-radius: 8px;
+    padding: 10px 14px;
+    margin-bottom: 12px;
+    text-align: left;
+}
+
+.about-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 3px 0;
+    font-size: 12px;
+}
+
+.about-label {
+    color: var(--text-muted);
+    font-weight: 500;
+}
+
+.about-row span:last-child {
+    color: var(--text-primary);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+}
+
+#about-links {
+    margin-bottom: 12px;
+}
+
+#about-links a {
+    color: var(--accent-blue);
+    text-decoration: none;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+#about-links a:hover {
+    text-decoration: underline;
+}
+
+.about-license {
+    color: var(--text-muted);
+    font-size: 11px;
+    margin: 0;
+}
