@@ -14,6 +14,10 @@ export function GetVersionInfo() {
   return window['go']['main']['App']['GetVersionInfo']();
 }
 
+export function NotifyFocus(arg1) {
+  return window['go']['main']['App']['NotifyFocus'](arg1);
+}
+
 export function OpenAudioFileDialog() {
   return window['go']['main']['App']['OpenAudioFileDialog']();
 }

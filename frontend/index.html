@@ -188,6 +188,27 @@
                         <p class="settings-hint">0 = no timeout (stay in command mode until explicitly cancelled)</p>
                     </section>
 
+                    <!-- Focus Actions -->
+                    <section class="settings-section">
+                        <h3>Focus Actions</h3>
+                        <p class="settings-hint">Actions to perform when focus changes between the terminal and input box.</p>
+                        <div class="settings-row">
+                            <label for="setting-auto-ime">
+                                <input type="checkbox" id="setting-auto-ime" />
+                                Auto IME Control
+                            </label>
+                            <span class="settings-hint">Turn IME off when terminal is focused, on when input box is focused</span>
+                        </div>
+                        <div class="settings-row">
+                            <label for="setting-on-terminal-focus-cmd">On Terminal Focus Command</label>
+                            <input type="text" id="setting-on-terminal-focus-cmd" placeholder="(optional) command to run when terminal is focused" />
+                        </div>
+                        <div class="settings-row">
+                            <label for="setting-on-input-focus-cmd">On Input Focus Command</label>
+                            <input type="text" id="setting-on-input-focus-cmd" placeholder="(optional) command to run when input box is focused" />
+                        </div>
+                    </section>
+
                     <!-- Key Bindings -->
                     <section class="settings-section">
                         <h3>Input Box Key Bindings</h3>

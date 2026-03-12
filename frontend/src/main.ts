@@ -4,7 +4,7 @@ import { WebLinksAddon } from '@xterm/addon-web-links';
 import '@xterm/xterm/css/xterm.css';
 import './style.css';
 
-import { StartTerminal, StartTerminalWithCommand, WriteTerminal, ResizeTerminal, GetKeyBindings, GetConfig, UpdateConfig, OpenFileDialog, ReadAudioFile, OpenAudioFileDialog, GetVersionInfo } from '../wailsjs/go/main/App';
+import { StartTerminal, StartTerminalWithCommand, WriteTerminal, ResizeTerminal, GetKeyBindings, GetConfig, UpdateConfig, OpenFileDialog, ReadAudioFile, OpenAudioFileDialog, GetVersionInfo, NotifyFocus } from '../wailsjs/go/main/App';
 import { EventsOn, Quit, BrowserOpenURL } from '../wailsjs/runtime/runtime';
 import { config } from '../wailsjs/go/models';
 import { applyTheme } from './themes';
@@ -552,6 +552,11 @@ function openSettings(): void {
         settingCmdTimeout.value = String(cfg.commandModeTimeout ?? 10);
         settingCmdPrefix.value = cfg.commandModePrefix || 'Ctrl+Shift+J';
 
+        // Focus actions
+        (document.getElementById('setting-auto-ime') as HTMLInputElement).checked = cfg.autoImeControl || false;
+        (document.getElementById('setting-on-terminal-focus-cmd') as HTMLInputElement).value = cfg.onTerminalFocusCommand || '';
+        (document.getElementById('setting-on-input-focus-cmd') as HTMLInputElement).value = cfg.onInputFocusCommand || '';
+
         // Populate terminal key bindings
         terminalKeybindingRows.innerHTML = '';
         const tBindings = cfg.terminalKeybindings || [];
@@ -782,6 +787,9 @@ interface CollectedSettings {
     theme: string;
     themeOverrides: Record<string, string>;
     shellProfiles: Array<{ name: string; command: string; args: string[]; env: string[]; pathAppend: string[] }>;
+    autoImeControl: boolean;
+    onTerminalFocusCommand: string;
+    onInputFocusCommand: string;
 }
 
 function collectSettingsFromForm(): CollectedSettings {
@@ -851,6 +859,9 @@ function collectSettingsFromForm(): CollectedSettings {
         theme: (document.getElementById('setting-theme') as HTMLSelectElement).value,
         themeOverrides: currentThemeOverrides,
         shellProfiles: profiles,
+        autoImeControl: (document.getElementById('setting-auto-ime') as HTMLInputElement).checked,
+        onTerminalFocusCommand: (document.getElementById('setting-on-terminal-focus-cmd') as HTMLInputElement).value.trim(),
+        onInputFocusCommand: (document.getElementById('setting-on-input-focus-cmd') as HTMLInputElement).value.trim(),
     };
 }
 
@@ -872,6 +883,9 @@ async function saveSettings(): Promise<void> {
             theme: settings.theme,
             themeOverrides: settings.themeOverrides,
             shellProfiles: settings.shellProfiles,
+            autoImeControl: settings.autoImeControl,
+            onTerminalFocusCommand: settings.onTerminalFocusCommand,
+            onInputFocusCommand: settings.onInputFocusCommand,
         }));
 
         // Apply font changes immediately
@@ -1168,6 +1182,26 @@ async function init(): Promise<void> {
 // Click on terminal container should always focus the terminal
 terminalContainer.addEventListener('mousedown', () => {
     terminal.focus();
+});
+
+// --- Focus Change Notifications ---
+// Notify Go backend when focus changes between terminal and input box.
+
+// xterm.js focuses its internal textarea; listen on it.
+const xtermTextarea = terminalContainer.querySelector('.xterm-helper-textarea') as HTMLTextAreaElement | null;
+if (xtermTextarea) {
+    xtermTextarea.addEventListener('focus', () => {
+        NotifyFocus('terminal').catch(console.error);
+    });
+} else {
+    // Fallback: if xterm textarea not found at startup, use focusin on container
+    terminalContainer.addEventListener('focusin', () => {
+        NotifyFocus('terminal').catch(console.error);
+    });
+}
+
+inputBox.addEventListener('focus', () => {
+    NotifyFocus('inputbox').catch(console.error);
 });
 
 init();

@@ -233,3 +233,32 @@ func (a *App) UpdateConfig(cfg config.Config) error {
 func (a *App) GetVersionInfo() map[string]string {
 	return version.Info()
 }
+
+// NotifyFocus is called from the frontend when focus changes between
+// the terminal and the input box. It handles built-in IME control
+// and custom focus commands.
+func (a *App) NotifyFocus(target string) {
+	cfg := a.config.Get()
+
+	// Built-in IME control
+	if cfg.AutoImeControl {
+		switch target {
+		case "terminal":
+			setIMEEnabled(false)
+		case "inputbox":
+			setIMEEnabled(true)
+		}
+	}
+
+	// Custom focus commands
+	var cmd string
+	switch target {
+	case "terminal":
+		cmd = cfg.OnTerminalFocusCommand
+	case "inputbox":
+		cmd = cfg.OnInputFocusCommand
+	}
+	if cmd != "" {
+		go runShellCommand(cmd)
+	}
+}

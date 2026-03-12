@@ -8,6 +8,8 @@ export function GetKeyBindings():Promise<Record<string, string>>;
 
 export function GetVersionInfo():Promise<Record<string, string>>;
 
+export function NotifyFocus(arg1:string):Promise<void>;
+
 export function OpenAudioFileDialog():Promise<string>;
 
 export function OpenFileDialog():Promise<string>;

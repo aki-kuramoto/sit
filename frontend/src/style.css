@@ -59,6 +59,7 @@ body {
 }
 
 #terminal-container .xterm-viewport {
+    overflow-y: scroll !important;
     scrollbar-width: thin;
     scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
 }

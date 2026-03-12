@@ -64,6 +64,9 @@ export namespace config {
 	    theme: string;
 	    themeOverrides: Record<string, string>;
 	    shellProfiles: ShellProfile[];
+	    autoImeControl: boolean;
+	    onTerminalFocusCommand?: string;
+	    onInputFocusCommand?: string;
 	
 	    static createFrom(source: any = {}) {
 	        return new Config(source);
@@ -84,6 +87,9 @@ export namespace config {
 	        this.theme = source["theme"];
 	        this.themeOverrides = source["themeOverrides"];
 	        this.shellProfiles = this.convertValues(source["shellProfiles"], ShellProfile);
+	        this.autoImeControl = source["autoImeControl"];
+	        this.onTerminalFocusCommand = source["onTerminalFocusCommand"];
+	        this.onInputFocusCommand = source["onInputFocusCommand"];
 	    }
 	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {

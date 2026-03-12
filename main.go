@@ -21,8 +21,8 @@ func main() {
 		Title:     "sit",
 		Width:     1024,
 		Height:    768,
-		MinWidth:  640,
-		MinHeight: 480,
+		MinWidth:  200,
+		MinHeight: 200,
 		AssetServer: &assetserver.Options{
 			Assets: assets,
 		},

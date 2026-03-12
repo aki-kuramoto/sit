@@ -37,19 +37,22 @@ type BellAction struct {
 
 // Config represents the application configuration.
 type Config struct {
-	KeyBindings         map[string]string    `json:"keybindings"`
-	TerminalKeyBindings []TerminalKeyBinding `json:"terminalKeybindings"`
-	BellActions         []BellAction         `json:"bellActions"`
-	Shell               string               `json:"shell"`
-	FontSize            int                  `json:"fontSize"`
-	FontFamily          string               `json:"fontFamily"`
-	CommandModeTimeout  int                  `json:"commandModeTimeout"` // seconds, 0 = no timeout
-	CommandModePrefix   string               `json:"commandModePrefix"`  // key combo to enter command mode
-	OnExit              string               `json:"onExit"`             // "exit" | "restart" | "select"
-	StartupBehavior     string               `json:"startupBehavior"`    // "immediate" | "select"
-	Theme               string               `json:"theme"`              // preset name
-	ThemeOverrides      map[string]string    `json:"themeOverrides"`     // CSS variable overrides
-	ShellProfiles       []ShellProfile       `json:"shellProfiles"`
+	KeyBindings             map[string]string    `json:"keybindings"`
+	TerminalKeyBindings     []TerminalKeyBinding `json:"terminalKeybindings"`
+	BellActions             []BellAction         `json:"bellActions"`
+	Shell                   string               `json:"shell"`
+	FontSize                int                  `json:"fontSize"`
+	FontFamily              string               `json:"fontFamily"`
+	CommandModeTimeout      int                  `json:"commandModeTimeout"`      // seconds, 0 = no timeout
+	CommandModePrefix       string               `json:"commandModePrefix"`       // key combo to enter command mode
+	OnExit                  string               `json:"onExit"`                  // "exit" | "restart" | "select"
+	StartupBehavior         string               `json:"startupBehavior"`         // "immediate" | "select"
+	Theme                   string               `json:"theme"`                   // preset name
+	ThemeOverrides          map[string]string    `json:"themeOverrides"`          // CSS variable overrides
+	ShellProfiles           []ShellProfile       `json:"shellProfiles"`
+	AutoImeControl          bool                 `json:"autoImeControl"`          // auto-switch IME on focus change
+	OnTerminalFocusCommand  string               `json:"onTerminalFocusCommand,omitempty"` // command to run when terminal is focused
+	OnInputFocusCommand     string               `json:"onInputFocusCommand,omitempty"`    // command to run when input box is focused
 }
 
 // DefaultConfig returns the default configuration.
